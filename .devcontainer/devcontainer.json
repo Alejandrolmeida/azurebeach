@@ -1,0 +1,39 @@
+{
+    "name": "Azure AI Agents - Python 3.13 + Conda",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/azure-cli:1": {
+            "extensions": "ml"
+        },
+        "ghcr.io/devcontainers/features/dotnet:latest": {
+            "version": "9.0"
+        }
+    },
+    "containerEnv": {
+        "AZURE_USERNAME": "j.blanco@prodware.es"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "ms-python.python",
+                "ms-toolsai.jupyter",
+                "ms-python.black-formatter",
+                "mathematic.vscode-pdf",
+                "ms-dotnettools.csdevkit"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/opt/conda/envs/azurebeach/bin/python",
+                "python.formatting.provider": "black"
+            }
+        }
+    },
+    "mounts": [
+        "source=${localEnv:HOME}/.azure,target=/root/.azure,type=bind"
+    ],
+    "remoteUser": "vscode",
+    "postCreateCommand": "az account show || az login --use-device-code"
+}
