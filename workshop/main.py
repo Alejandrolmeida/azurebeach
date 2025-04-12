@@ -126,19 +126,47 @@ async def main():
 
         print("\n🛠 Ejecutando acción de mitigación...")
 
-        stream_exec = await project_client.agents.create_stream(
+        # Crear un run para el ejecutor
+        executor_run = await project_client.agents.create_run(
             thread_id=exec_thread.id,
-            agent_id=executor.id,
-            event_handler=exec_handler,
-            instructions=executor.instructions
+            agent_id=executor.id
         )
 
-        async with stream_exec as stream:
-            async for event in stream:
-                if hasattr(event, "delta") and event.delta and event.delta.content:
-                    print(event.delta.content, end="", flush=True)
+        print(f"✅ Run creado para el ejecutor: {executor_run.id}")
 
-        print("\n✅ Mitigación completada.")
+        # Monitorizar el progreso del run
+        while executor_run.status not in ["completed", "failed"]:
+            print(f"⏳ Estado del run {executor_run.id}: {executor_run.status}")
+            
+            if executor_run.status == "requires_action":
+                print(f"⚠️ El run {executor_run.id} requiere acción. Ejecutando herramientas...")
+                tool_outputs = []
+
+                # Procesar las herramientas requeridas
+                for tool_call in executor_run.required_action.submit_tool_outputs.tool_calls:
+                    args = json.loads(tool_call.function.arguments)
+                    print("🧪 Ejecutando función:", tool_call.function.name)
+                    result = await mitigate_alert(**args)  # Ejecutar la herramienta de mitigación
+                    tool_outputs.append({
+                        "tool_call_id": tool_call.id,
+                        "output": result,
+                    })
+
+                # Enviar las salidas de las herramientas al run
+                await project_client.agents.submit_tool_outputs_to_run(
+                    thread_id=exec_thread.id,
+                    run_id=executor_run.id,
+                    tool_outputs=tool_outputs
+                )
+                print(f"✅ Herramientas ejecutadas y resultados enviados para el run {executor_run.id}.")
+
+            await asyncio.sleep(1)  # Esperar un segundo antes de verificar nuevamente
+            executor_run = await project_client.agents.get_run(thread_id=exec_thread.id, run_id=executor_run.id)
+
+        if executor_run.status == "completed":
+            print("\n✅ Mitigación completada.")
+        elif executor_run.status == "failed":
+            print(f"\n❌ La mitigación falló: {executor_run.last_error}")
 
     """ print("\n🧹 Limpiando recursos...")
     await project_client.agents.delete_agent(evaluator.id)
