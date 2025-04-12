@@ -13,7 +13,7 @@
         }
     },
     "containerEnv": {
-        "AZURE_USERNAME": "j.blanco@prodware.es"
+        "AZURE_USERNAME": "alejandro.almeida.garcia@gmail.com"
     },
     "customizations": {
         "vscode": {
