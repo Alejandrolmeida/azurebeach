@@ -4,18 +4,18 @@ Sistema automatizado de evaluación y mitigación de eventos críticos en Azure 
 
 ## 🚀 Objetivo
 
-Monitorizar eventos como la creación de recursos en Azure y actuar de forma automática ante comportamientos sospechosos o críticos, como:
+Monitorizar eventos críticos en Azure y actuar automáticamente ante comportamientos sospechosos o no autorizados, como:
 
 - Borrar grupos de recursos no autorizados
-- Detener o eliminar VMs
-- Deshabilitar usuarios
+- Detener o eliminar máquinas virtuales
+- Deshabilitar usuarios en Azure AD
 
 ## ⚙️ Tecnologías empleadas
 
-- **Azure Logic Apps** + **Event Grid**
-- **Azure AI Projects** (Evaluador y Ejecutor)
-- **Azure SDK for Python**
-- **Contenedor DevContainer + Conda**
+- **Azure Logic Apps** + **Event Grid**: Para recibir y procesar eventos en tiempo real.
+- **Azure AI Projects**: Implementación de agentes evaluadores y ejecutores.
+- **Azure SDK for Python**: Para interactuar con los recursos de Azure.
+- **Contenedor DevContainer**: Entorno de desarrollo basado en Docker y Conda.
 
 ---
 
@@ -23,61 +23,60 @@ Monitorizar eventos como la creación de recursos en Azure y actuar de forma aut
 
 ### `.devcontainer/`
 
-- `devcontainer.json`: Configuración del entorno VSCode
-- `Dockerfile`: Python 3.13 + Miniconda + entorno `azurebeach`
-- `requirements.txt`: Dependencias del entorno
+- `devcontainer.json`: Configuración del entorno de desarrollo en VSCode.
+- `Dockerfile`: Imagen base con Python 3.13, Miniconda y dependencias del proyecto.
+- `requirements.txt`: Lista de dependencias necesarias.
 
 ### `setup/`
 
-- `*.bicep`: Scripts para configurar Azure AI Hub y Projects
-- `deploy.sh`: Script para desplegar los recursos necesarios
+- `*.bicep`: Scripts para configurar recursos en Azure (AI Hub, Projects, etc.).
+- `deploy.sh`: Script para desplegar los recursos necesarios en Azure.
 
 ### `workshop/`
 
 #### Archivos principales
 
-- `main.py`: Entrada del sistema. Lógica completa de evaluación y mitigación
-- `.env`: Variables como `MODEL_DEPLOYMENT_NAME`, `PROJECT_CONNECTION_STRING`
+- `main.py`: Entrada principal del sistema. Contiene la lógica de evaluación y mitigación.
+- `.env`: Variables de entorno como `MODEL_DEPLOYMENT_NAME` y `PROJECT_CONNECTION_STRING`.
 
 #### `agents/`
 
-- `evaluator_agent.py`: Crea o recupera el agente evaluador
-- `executor_agent.py`: Crea o recupera el agente ejecutor
+- `evaluator_agent.py`: Lógica para crear o recuperar el agente evaluador.
+- `executor_agent.py`: Lógica para crear o recuperar el agente ejecutor.
 
 #### `prompts/`
 
-- `evaluator.txt`: Prompt para el evaluador (solo devuelve JSON)
-- `executor.txt`: Prompt para el ejecutor
+- `evaluator.txt`: Prompt para el evaluador (devuelve JSON estructurado).
+- `executor.txt`: Prompt para el ejecutor (realiza acciones de mitigación).
 
 #### `tools/`
 
-- `evaluate_tool.py`: Devuelve juicio sobre una alerta
-- `mitigate_tool.py`: Redirige la alerta a la acción adecuada
-- `delete_resource_group.py`: Borra RG con Azure SDK
+- `evaluate_tool.py`: Evalúa alertas y devuelve un juicio.
+- `mitigate_tool.py`: Redirige alertas a las acciones de mitigación correspondientes.
+- `delete_resource_group.py`: Borra grupos de recursos utilizando el Azure SDK.
 - `vm_actions.py`:
-  - `delete_virtual_machine` → si OS es Windows
-  - `stop_virtual_machine` → si OS es Linux
-- `disable_user.py`: Deshabilita usuario con Microsoft Graph
+  - `delete_virtual_machine`: Elimina máquinas virtuales (Windows).
+  - `stop_virtual_machine`: Detiene máquinas virtuales (Linux).
+- `disable_user.py`: Deshabilita usuarios en Azure AD utilizando Microsoft Graph.
 
 #### `utilities/`
 
-- `utilities.py`: Funciones de logging, carga de instrucciones, subida de archivos, etc.
-- `terminal_colors.py`: Estilos de texto para consola
-- `utils.py`: Auxiliar
+- `utilities.py`: Funciones auxiliares como logging, carga de instrucciones y manejo de archivos.
+- `terminal_colors.py`: Estilos de texto para la consola.
+- `utils.py`: Funciones auxiliares adicionales.
 
 #### Otros
 
-- `stream_event_handler.py`: Manejador de eventos en streaming desde Azure AI
+- `stream_event_handler.py`: Manejador de eventos en streaming desde Azure AI.
 
 ---
 
 ## ✅ Flujo general
 
-1. Logic App recibe evento (p. ej. creación de RG)
-2. Envía el evento al agente evaluador (Azure AI)
-3. Evaluador decide si es crítico (JSON estructurado)
-4. Si es crítico → ejecutor realiza la acción real (borrar RG, detener VM, etc.)
-5. Resultado mostrado en consola
+1. **Recepción del evento**: Logic App recibe un evento (por ejemplo, creación de un grupo de recursos).
+2. **Evaluación**: El evento se envía al agente evaluador (Azure AI), que decide si es crítico.
+3. **Mitigación**: Si el evento es crítico, el agente ejecutor realiza la acción correspondiente (borrar RG, detener VM, etc.).
+4. **Resultado**: El resultado de la acción se muestra en la consola.
 
 ---
 
@@ -98,16 +97,17 @@ elif operation == "graph.microsoft.com/users":
 
 ## 🎧 Recomendaciones
 
-- Usa `az login` dentro del contenedor si usas `DefaultAzureCredential`
-- Ejecuta `main.py` para iniciar el sistema manualmente o automatízalo con un `supervisor` o `cron`
+- **Autenticación**: Usa `az login` dentro del contenedor si utilizas `DefaultAzureCredential`.
+- **Ejecución manual**: Ejecuta `main.py` para iniciar el sistema manualmente.
+- **Automatización**: Configura un `supervisor` o `cron` para ejecutar el sistema automáticamente.
 
 ---
 
 ## ⚡ Pendiente
 
-- Conexión directa desde Logic App al contenedor (WebSocket / webhook)
-- Persistencia de estado / logs
-- Mejoras UX para consola o dashboard web
+- **Integración directa**: Conexión desde Logic App al contenedor mediante WebSocket o webhook.
+- **Persistencia**: Implementar almacenamiento de estado y logs.
+- **Mejoras UX**: Crear un dashboard web o mejorar la experiencia en consola.
 
 ---
 
